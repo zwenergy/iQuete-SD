@@ -1,0 +1,41 @@
+.program get_input
+
+// Init wait for nWR to go it's idle.
+wait 1 gpio 14
+
+.wrap_target
+// Wait for nWR to go low.
+wait 0 gpio 14
+
+// Wait for the rising edge to capture data.
+wait 1 gpio 14
+
+// Capture data.
+in pins, 32
+
+// Push out.
+push
+
+// wait again.
+.wrap
+
+
+% c-sdk {
+static inline void get_input_program_init(PIO pio, uint sm, uint offset ) {
+
+  pio_sm_config c = get_input_program_get_default_config( offset );
+  // Set address to read.
+  pio_sm_set_consecutive_pindirs(pio, sm, 0, 10, false);
+  
+  // Set IN pins.
+  sm_config_set_in_pins( &c, 0 );
+  sm_config_set_in_pin_count( &c, 10 );
+  
+  // Deeper FIFO as we're not doing any TX
+  sm_config_set_fifo_join( &c, PIO_FIFO_JOIN_RX );
+
+  pio_sm_init( pio, sm, offset, &c );
+  pio_sm_set_enabled( pio, sm, true );
+}
+
+%}
